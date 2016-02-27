@@ -1,4 +1,15 @@
 $(document).ready(function () {
+    var users = [];
+
+    // Show 'Loading...' while requesting
+    $(document).ajaxStart(function () {
+        $('#loading-modal').modal('show');
+    });
+    $(document).ajaxStop(function () {
+        $('#loading-modal').modal('hide');
+    });
+
+    // Fetch data
     $.ajax({
         type: "GET",
         url: "http://localhost:8080/restful/user/all",
@@ -9,19 +20,49 @@ $(document).ready(function () {
             request.setRequestHeader("Authorization", "Basic " + btoa("admin:admin"));
         }
     }).done(function (data) {
-        data.forEach(function (user, i) {
-            $('#users-list').append('<div id="user-' + i + '"></div>');
-            $('#user-' + i).append('<div class="panel panel-default"><div class="panel-body form-horizontal"><div class="form-group"><label class="control-label col-sm-1">Name</label><div class="col-sm-11"><input type="text" class="form-control required" disabled style="cursor:text!important;" value="' + user.name + '"></div></div>\n\
-                    <div class="form-group"><label class="control-label col-sm-1">Email</label><div class="col-sm-11"><input type="text" class="form-control required" disabled style="cursor:text!important;" value="' + user.email + '"></div></div><div style="text-align: center;"><button data-toggle="modal" data-target="#myModal' + i + '" class="btn btn-info">Detail</button></div></div>');
-            $('#user-' + i).append('<div id="myModal' + i + '" class="modal fade" role="dialog"><div class="modal-dialog"><div class="modal-content"><div class="modal-header">\n\
-                    <button type="button" class="close" data-dismiss="modal">&times;</button><h4 class="modal-title">' + user.name + '\'s Info</h4></div><div class="modal-body"><div class="form-horizontal">\n\
-                    <div class="form-group"><label class="control-label col-sm-3">Id</label><div class="col-sm-9"><input type="text" class="form-control required" disabled style="cursor:text!important;" value="' + user.id + '"></div></div>\n\
-                    <div class="form-group"><label class="control-label col-sm-3">Username</label><div class="col-sm-9"><input type="text" class="form-control required" disabled style="cursor:text!important;" value="' + user.username + '"></div></div>\n\
-                    <div class="form-group"><label class="control-label col-sm-3">Password</label><div class="col-sm-9"><input type="text" class="form-control required" disabled style="cursor:text!important;" value="' + user.password + '"></div></div>\n\
-                    <div class="form-group"><label class="control-label col-sm-3">Name</label><div class="col-sm-9"><input type="text" class="form-control required" disabled style="cursor:text!important;" value="' + user.name + '"></div></div>\n\
-                    <div class="form-group"><label class="control-label col-sm-3">Email</label><div class="col-sm-9"><input type="text" class="form-control required" disabled style="cursor:text!important;" value="' + user.email + '"></div></div>\n\
-                    <div class="form-group"><label class="control-label col-sm-3">Status</label><div class="col-sm-9"><input type="text" class="form-control required" disabled style="cursor:text!important;" value="' + user.status + '"></div></div>\n\
-                    </div></div><div class="modal-footer"><button type="button" class="btn btn-default" data-dismiss="modal">Close</button></div></div></div></div>');
+        users = data;
+        var table = $('#users-list').DataTable({
+            data: data,
+            columns: [
+                {
+                    title: 'Id',
+                    data: 'id'
+                },
+                {
+                    title: 'Name',
+                    data: 'name'
+                },
+                {
+                    title: 'Email',
+                    data: 'email'
+                },
+                {
+                    title: 'Actions',
+                    render: function (data, type, user) {
+                        return '<button class="btn btn-success btn-sm"><i class="fa fa-eye"></i> Details</button>';
+                    }
+                }
+            ]
+        });
+
+        $('#users-list tbody').on('click', 'button', function () {
+            var data = table.row($(this).parents('tr')).data();
+            var user = users.find(function (u) {
+                return u.id === data.id;
+            });
+            if (user) {
+                $('#details-modal-label').html('<i class="fa fa-info-circle"></i> ' + user.username + '\'s details');
+                $('#details-id').attr('value', user.id);
+                $('#details-username').attr('value', user.username);
+                $('#details-password').attr('value', user.password);
+                $('#details-name').attr('value', user.name);
+                $('#details-email').attr('value', user.email);
+                $('#details-status').attr('value', user.status);
+
+                $('#details-modal').modal('show');
+            } else {
+                alert('Wrong user id');
+            }
         });
     });
 });
